@@ -6,6 +6,12 @@ module Fluent
   class BuzzStudy < Fluent::Output
     Fluent::Plugin.register_output('buzz_study', self)
 
+    config_param :mongo_host, :string
+    config_param :mongo_port, :integer
+    config_param :mongo_db, :string
+    config_param :mongo_collection, :string
+    config_param :tag, :string
+
     def configure(conf)
       super
     end
@@ -27,15 +33,15 @@ module Fluent
         record = {}
         record["uri"] = uri
         record["title"] = title
-        Fluent::Engine.emit("uri.#{tag}", time, record)
+        Fluent::Engine.emit("#{@tag}.#{tag}", time, record)
       end
     end
 
     private
 
     def get_page_title(uri)
-      con = Mongo::Connection.new("localhost", 27017)
-      col = con.db("buzz_study").collection("uri_map")
+      con = Mongo::Connection.new(@mongo_host, @mongo_port)
+      col = con.db(@mongo_db).collection(@mongo_collection)
       result = col.find(uri: uri).first
       if result
         title = result["title"]
