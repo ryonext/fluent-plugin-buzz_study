@@ -29,30 +29,32 @@ module Fluent
       chain.next
       es.each do |time, record|
         uri = record["original_url"]
-        title = get_page_title(uri)
+        doc = add_record(uri)
         record = {}
-        record["uri"] = uri
-        record["title"] = title
+        record["uri"] = doc["uri"]
+        record["title"] = doc["title"]
+        record["count"] = doc["count"]
         Fluent::Engine.emit("#{@tag}.#{tag}", time, record)
       end
     end
 
     private
 
-    def get_page_title(uri)
+    def add_record(uri)
       con = Mongo::Connection.new(@mongo_host, @mongo_port)
       col = con.db(@mongo_db).collection(@mongo_collection)
-      result = col.find(uri: uri).first
-      if result
-        title = result["title"]
+      doc = col.find(uri: uri).first
+      if doc
+        doc["count"] = (doc["count"] || 0) + 1
+        col.save(doc)
       else
         response = try_redirection_uri(uri)
         page = Nokogiri(response.body)
         title = page.title.gsub("\n", "")
-        doc = {"uri" => uri, "title" => title}
+        doc = {"uri" => uri, "title" => title, "count" => 1}
         col.insert(doc)
       end
-      title
+      doc
     end
 
     def try_redirection_uri(uri)

@@ -9,13 +9,17 @@ describe Fluent::BuzzStudy do
     buzz_study
   end
 
-  describe ".get_page_title" do
+  describe "#add_record" do
     context "shorten uri" do
       subject do
-        buzz_study.send(:get_page_title, "http://htn.to/sMTTfL")
+        buzz_study.send(:add_record, "http://htn.to/sMTTfL")
       end
       let(:expected){ "オープンセミナー2014@広島 - オープンセミナー広島 | Doorkeeper" }
-      it { should eq expected }
+      it "returns updated record." do
+        result = subject
+        result["title"].should eq expected
+        result["count"].should > 0
+      end
     end
   end
 end
