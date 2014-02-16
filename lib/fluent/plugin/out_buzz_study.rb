@@ -10,6 +10,8 @@ module Fluent
     config_param :mongo_port, :integer
     config_param :mongo_db, :string
     config_param :mongo_collection, :string
+    config_param :mongo_user, :string
+    config_param :mongo_pass, :string
     config_param :tag, :string
 
     def configure(conf)
@@ -41,8 +43,9 @@ module Fluent
     private
 
     def add_record(uri)
-      con = Mongo::Connection.new(@mongo_host, @mongo_port)
-      col = con.db(@mongo_db).collection(@mongo_collection)
+      db = Mongo::Connection.new(@mongo_host, @mongo_port).db(@mongo_db)
+      db.authenticate(@mongo_user, @mongo_pass)
+      col = db.collection(@mongo_collection)
       doc = col.find(uri: uri).first
       if doc
         doc["count"] = (doc["count"] || 0) + 1
